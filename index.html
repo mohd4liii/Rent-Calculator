@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rent Calc | Interactive Edition</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --primary-green: #2d5a27;
+            --soft-beige: #f5f5dc;
+            --text-dark: #1a1a1a;
+            --white: #ffffff;
+        }
+
+        body {
+            background-color: var(--soft-beige);
+            color: var(--text-dark);
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3.5rem;
+            color: var(--primary-green);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .calculator-card {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: 2px solid var(--primary-green);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .input-group { margin-bottom: 12px; }
+
+        label {
+            display: block;
+            font-weight: 700;
+            font-size: 0.7rem;
+            color: var(--primary-green);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: 'Montserrat', sans-serif;
+            box-sizing: border-box;
+        }
+
+        /* LIVE PREVIEW AREA */
+        .live-preview {
+            background: var(--soft-beige);
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid var(--primary-green);
+        }
+
+        .live-preview h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--primary-green);
+        }
+
+        .live-total {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.2rem;
+            margin: 5px 0;
+            color: var(--text-dark);
+        }
+
+        .download-btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px;
+            background: var(--primary-green);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .download-btn:hover { background: #1e3d1a; }
+
+        /* SECRET RECEIPT (HIDDEN FROM USER) */
+        #receipt-area {
+            position: absolute;
+            left: -9999px;
+            width: 300px;
+            padding: 30px;
+            background: white;
+            color: black;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .receipt-header {
+            text-align: center;
+            border-bottom: 2px dashed #000;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+        }
+
+        .line-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
+        .total-row { border-top: 1px dashed #000; margin-top: 10px; padding-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>Rent Calculator</h1>
+
+    <div class="calculator-card">
+        <div class="input-group"><label>Monthly Rent</label><input type="number" id="rent" placeholder="0.00"></div>
+        <div class="input-group"><label>Food Expenses</label><input type="number" id="food" placeholder="0.00"></div>
+        <div class="input-group"><label>Electricity Units</label><input type="number" id="units" placeholder="0"></div>
+        <div class="input-group"><label>Cost Per Unit</label><input type="number" id="charge" placeholder="0.00"></div>
+        <div class="input-group"><label>Roommates</label><input type="number" id="persons" value="1"></div>
+        
+        <div class="live-preview">
+            <h2>Amount Per Person</h2>
+            <div class="live-total">₹<span id="live-per-person">0.00</span></div>
+        </div>
+
+        <button class="download-btn" id="download-btn">DOWNLOAD RECEIPT</button>
+    </div>
+
+    <div id="receipt-area">
+        <div class="receipt-header">
+            <h2 style="margin:0; font-family:'Bebas Neue'; text-align:center;">OFFICIAL RECEIPT</h2>
+            <p style="font-size:0.7rem; text-align:center;">Date: <span id="current-date"></span></p>
+        </div>
+
+        <div class="line-item"><span>RENT:</span><span>₹<span id="rec-rent">0.00</span></span></div>
+        <div class="line-item"><span>FOOD:</span><span>₹<span id="rec-food">0.00</span></span></div>
+        <div class="line-item"><span>ELECTRICITY:</span><span>₹<span id="rec-elec">0.00</span></span></div>
+        
+        <div class="total-row line-item">
+            <span>TOTAL BILL:</span>
+            <span>₹<span id="rec-total">0.00</span></span>
+        </div>
+        <div class="line-item" style="color: #2d5a27; font-weight: bold;">
+            <span>PER PERSON:</span>
+            <span>₹<span id="rec-split">0.00</span></span>
+        </div>
+
+        <div style="text-align:center; border-top:1px dashed #000; margin-top:20px; padding-top:10px;">
+            <p style="font-size:0.5rem; opacity:0.5;">Developed by Mohammad Ali Khan</p>
+        </div>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll('input');
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString();
+
+        function updateValues() {
+            const rent = parseFloat(document.getElementById('rent').value) || 0;
+            const food = parseFloat(document.getElementById('food').value) || 0;
+            const units = parseFloat(document.getElementById('units').value) || 0;
+            const charge = parseFloat(document.getElementById('charge').value) || 0;
+            const persons = parseFloat(document.getElementById('persons').value) || 1;
+
+            const elecTotal = units * charge;
+            const total = rent + food + elecTotal;
+            const perPerson = total / persons;
+
+            // 1. UPDATE THE LIVE PREVIEW (VISIBLE)
+            document.getElementById('live-per-person').innerText = perPerson.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+            // 2. UPDATE THE HIDDEN RECEIPT (FOR DOWNLOAD)
+            document.getElementById('rec-rent').innerText = rent.toFixed(2);
+            document.getElementById('rec-food').innerText = food.toFixed(2);
+            document.getElementById('rec-elec').innerText = elecTotal.toFixed(2);
+            document.getElementById('rec-total').innerText = total.toFixed(2);
+            document.getElementById('rec-split').innerText = perPerson.toFixed(2);
+        }
+
+        // Attach listener to all inputs
+        inputs.forEach(input => input.addEventListener('input', updateValues));
+
+        // Download Logic
+        document.getElementById('download-btn').addEventListener('click', function() {
+            const receipt = document.getElementById('receipt-area');
+            html2canvas(receipt, {
+                backgroundColor: "#ffffff",
+                scale: 3
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'RentReceipt.png';
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
+        });
+    </script>
+</body>
+</html>
