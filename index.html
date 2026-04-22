@@ -2,216 +2,435 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rent Calc | Interactive Edition</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Rent Calculator</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
         :root {
-            --primary-green: #2d5a27;
-            --soft-beige: #f5f5dc;
-            --text-dark: #1a1a1a;
-            --white: #ffffff;
+            --green:      #2d5a27;
+            --green-dark: #1e3d1a;
+            --green-light:#e8f0e7;
+            --beige:      #f5f5dc;
+            --text:       #1a1a1a;
+            --muted:      #6b7c69;
+            --white:      #ffffff;
+            --red:        #c0392b;
         }
 
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            background-color: var(--soft-beige);
-            color: var(--text-dark);
+            background: var(--beige);
+            color: var(--text);
             font-family: 'Montserrat', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
-            margin: 0;
-            padding: 20px;
+            padding: 30px 20px 50px;
         }
 
         h1 {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 3.5rem;
-            color: var(--primary-green);
-            margin-bottom: 15px;
-            text-transform: uppercase;
+            font-size: clamp(2.5rem, 8vw, 3.8rem);
+            color: var(--green);
+            letter-spacing: 2px;
+            margin-bottom: 6px;
             text-align: center;
         }
 
-        .calculator-card {
-            background: var(--white);
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            border: 2px solid var(--primary-green);
-            width: 100%;
-            max-width: 400px;
+        .subtitle {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 28px;
         }
 
-        .input-group { margin-bottom: 12px; }
+        .card {
+            background: var(--white);
+            padding: 28px 24px;
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(45,90,39,0.10);
+            border: 2px solid var(--green);
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .section-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin: 18px 0 10px;
+            border-bottom: 1px solid var(--green-light);
+            padding-bottom: 4px;
+        }
+
+        .section-label:first-of-type { margin-top: 0; }
+
+        .input-group { margin-bottom: 10px; }
 
         label {
             display: block;
             font-weight: 700;
-            font-size: 0.7rem;
-            color: var(--primary-green);
+            font-size: 0.68rem;
+            color: var(--green);
             text-transform: uppercase;
+            letter-spacing: 0.5px;
             margin-bottom: 4px;
         }
 
-        input {
+        input[type="number"] {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+            padding: 11px 14px;
+            border: 1.5px solid #dde8dc;
+            border-radius: 8px;
             font-family: 'Montserrat', sans-serif;
-            box-sizing: border-box;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            background: #fafffe;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            /* FIX: show number keypad on mobile */
+            inputmode: decimal;
         }
 
-        /* LIVE PREVIEW AREA */
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--green);
+            box-shadow: 0 0 0 3px rgba(45,90,39,0.12);
+        }
+
+        /* Remove number spinners */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        /* Two-column grid for electricity */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        /* ── LIVE BREAKDOWN ── */
         .live-preview {
-            background: var(--soft-beige);
+            background: var(--green-light);
             margin-top: 20px;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border: 1px solid var(--primary-green);
+            padding: 16px 18px;
+            border-radius: 12px;
+            border: 1.5px solid var(--green);
         }
 
-        .live-preview h2 {
+        .preview-title {
             font-family: 'Bebas Neue', sans-serif;
-            margin: 0;
-            font-size: 1.2rem;
-            color: var(--primary-green);
+            font-size: 1rem;
+            color: var(--green);
+            letter-spacing: 1px;
+            margin-bottom: 10px;
         }
 
-        .live-total {
+        .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--muted);
+            padding: 3px 0;
+        }
+
+        .breakdown-row.total-row {
+            border-top: 1.5px dashed var(--green);
+            margin-top: 8px;
+            padding-top: 8px;
+            color: var(--text);
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .per-person-row {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid var(--green);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .per-person-label {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 2.2rem;
-            margin: 5px 0;
-            color: var(--text-dark);
+            font-size: 1rem;
+            color: var(--green);
+            letter-spacing: 1px;
         }
 
+        .per-person-amount {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            color: var(--green);
+            line-height: 1;
+        }
+
+        /* Download button */
         .download-btn {
             width: 100%;
-            margin-top: 15px;
-            padding: 12px;
-            background: var(--primary-green);
+            margin-top: 16px;
+            padding: 14px;
+            background: var(--green);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-family: 'Bebas Neue', sans-serif;
             font-size: 1.2rem;
+            letter-spacing: 1px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 0 var(--green-dark);
         }
 
-        .download-btn:hover { background: #1e3d1a; }
+        .download-btn:hover:not(:disabled) { background: var(--green-dark); }
+        .download-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
 
-        /* SECRET RECEIPT (HIDDEN FROM USER) */
+        /* FIX: disable button when no data */
+        .download-btn:disabled {
+            background: #aaa;
+            box-shadow: 0 4px 0 #888;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* FIX: shake animation when trying to download empty */
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            20%,60% { transform: translateX(-6px); }
+            40%,80% { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.4s ease; }
+
+        /* Error hint */
+        .hint {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--red);
+            font-weight: 700;
+            margin-top: 6px;
+            min-height: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .hint.visible { opacity: 1; }
+
+        /* ── HIDDEN RECEIPT ── */
         #receipt-area {
             position: absolute;
             left: -9999px;
-            width: 300px;
-            padding: 30px;
+            width: 320px;
+            padding: 32px 28px;
             background: white;
             color: black;
             font-family: 'Courier New', Courier, monospace;
         }
 
-        .receipt-header {
+        .r-header {
             text-align: center;
             border-bottom: 2px dashed #000;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
         }
 
-        .line-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
-        .total-row { border-top: 1px dashed #000; margin-top: 10px; padding-top: 10px; font-weight: bold; }
+        .r-title {
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .r-date { font-size: 0.7rem; margin-top: 4px; opacity: 0.6; }
+
+        .r-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.88rem;
+            margin-bottom: 7px;
+        }
+
+        .r-divider { border: none; border-top: 1px dashed #000; margin: 12px 0; }
+
+        .r-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 900;
+            font-size: 0.95rem;
+            margin-bottom: 7px;
+        }
+
+        .r-per-person {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 900;
+            font-size: 1.1rem;
+            color: #2d5a27;
+            border-top: 2px dashed #000;
+            padding-top: 10px;
+            margin-top: 4px;
+        }
+
+        .r-footer {
+            text-align: center;
+            border-top: 1px dashed #000;
+            margin-top: 20px;
+            padding-top: 10px;
+            font-size: 0.55rem;
+            opacity: 0.45;
+        }
     </style>
 </head>
 <body>
 
     <h1>Rent Calculator</h1>
+    <p class="subtitle">Split bills. Stay friends.</p>
 
-    <div class="calculator-card">
-        <div class="input-group"><label>Monthly Rent</label><input type="number" id="rent" placeholder="0.00"></div>
-        <div class="input-group"><label>Food Expenses</label><input type="number" id="food" placeholder="0.00"></div>
-        <div class="input-group"><label>Electricity Units</label><input type="number" id="units" placeholder="0"></div>
-        <div class="input-group"><label>Cost Per Unit</label><input type="number" id="charge" placeholder="0.00"></div>
-        <div class="input-group"><label>Roommates</label><input type="number" id="persons" value="1"></div>
-        
-        <div class="live-preview">
-            <h2>Amount Per Person</h2>
-            <div class="live-total">₹<span id="live-per-person">0.00</span></div>
+    <div class="card">
+
+        <div class="section-label">Housing</div>
+        <div class="input-group">
+            <label>Monthly Rent (₹)</label>
+            <input type="number" id="rent" placeholder="0" min="0" inputmode="decimal">
         </div>
 
-        <button class="download-btn" id="download-btn">DOWNLOAD RECEIPT</button>
+        <div class="section-label">Food</div>
+        <div class="input-group">
+            <label>Food Expenses (₹)</label>
+            <input type="number" id="food" placeholder="0" min="0" inputmode="decimal">
+        </div>
+
+        <div class="section-label">Electricity</div>
+        <div class="two-col">
+            <div class="input-group">
+                <label>Units Used</label>
+                <input type="number" id="units" placeholder="0" min="0" inputmode="decimal">
+            </div>
+            <div class="input-group">
+                <label>Cost / Unit (₹)</label>
+                <input type="number" id="charge" placeholder="0.00" min="0" inputmode="decimal">
+            </div>
+        </div>
+
+        <div class="section-label">Split</div>
+        <div class="input-group">
+            <label>Number of Roommates</label>
+            <!-- FIX: min="1" prevents zero/negative persons -->
+            <input type="number" id="persons" value="1" min="1" inputmode="numeric">
+        </div>
+
+        <!-- LIVE BREAKDOWN -->
+        <div class="live-preview">
+            <div class="preview-title">💰 Cost Breakdown</div>
+            <div class="breakdown-row"><span>Rent</span><span>₹<span id="b-rent">0.00</span></span></div>
+            <div class="breakdown-row"><span>Food</span><span>₹<span id="b-food">0.00</span></span></div>
+            <div class="breakdown-row"><span>Electricity (<span id="b-units">0</span> units)</span><span>₹<span id="b-elec">0.00</span></span></div>
+            <div class="breakdown-row total-row"><span>Total Bill</span><span>₹<span id="b-total">0.00</span></span></div>
+            <div class="per-person-row">
+                <span class="per-person-label">Per Person</span>
+                <span class="per-person-amount">₹<span id="b-per">0.00</span></span>
+            </div>
+        </div>
+
+        <button class="download-btn" id="download-btn" disabled>⬇ DOWNLOAD RECEIPT</button>
+        <p class="hint" id="hint">Enter some values first!</p>
     </div>
 
+    <!-- HIDDEN RECEIPT FOR SCREENSHOT -->
     <div id="receipt-area">
-        <div class="receipt-header">
-            <h2 style="margin:0; font-family:'Bebas Neue'; text-align:center;">OFFICIAL RECEIPT</h2>
-            <p style="font-size:0.7rem; text-align:center;">Date: <span id="current-date"></span></p>
+        <div class="r-header">
+            <div class="r-title">RENT RECEIPT</div>
+            <div class="r-date">Date: <span id="r-date"></span></div>
         </div>
 
-        <div class="line-item"><span>RENT:</span><span>₹<span id="rec-rent">0.00</span></span></div>
-        <div class="line-item"><span>FOOD:</span><span>₹<span id="rec-food">0.00</span></span></div>
-        <div class="line-item"><span>ELECTRICITY:</span><span>₹<span id="rec-elec">0.00</span></span></div>
-        
-        <div class="total-row line-item">
-            <span>TOTAL BILL:</span>
-            <span>₹<span id="rec-total">0.00</span></span>
-        </div>
-        <div class="line-item" style="color: #2d5a27; font-weight: bold;">
-            <span>PER PERSON:</span>
-            <span>₹<span id="rec-split">0.00</span></span>
-        </div>
+        <div class="r-row"><span>MONTHLY RENT</span><span>₹<span id="r-rent">0.00</span></span></div>
+        <div class="r-row"><span>FOOD</span><span>₹<span id="r-food">0.00</span></span></div>
+        <div class="r-row"><span>ELECTRICITY (<span id="r-units">0</span> units)</span><span>₹<span id="r-elec">0.00</span></span></div>
 
-        <div style="text-align:center; border-top:1px dashed #000; margin-top:20px; padding-top:10px;">
-            <p style="font-size:0.5rem; opacity:0.5;">Developed by Mohammad Ali Khan</p>
-        </div>
+        <hr class="r-divider">
+        <div class="r-total"><span>TOTAL BILL</span><span>₹<span id="r-total">0.00</span></span></div>
+        <div class="r-row" style="font-size:0.8rem; opacity:0.6;"><span>÷ <span id="r-persons">1</span> person(s)</span></div>
+        <div class="r-per-person"><span>PER PERSON</span><span>₹<span id="r-per">0.00</span></span></div>
+
+        <div class="r-footer">Developed by Mohammad Ali Khan</div>
     </div>
 
     <script>
-        const inputs = document.querySelectorAll('input');
-        document.getElementById('current-date').innerText = new Date().toLocaleDateString();
+        const $ = id => document.getElementById(id);
+        const fmt = n => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        // Set today's date on load
+        $('r-date').innerText = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
 
         function updateValues() {
-            const rent = parseFloat(document.getElementById('rent').value) || 0;
-            const food = parseFloat(document.getElementById('food').value) || 0;
-            const units = parseFloat(document.getElementById('units').value) || 0;
-            const charge = parseFloat(document.getElementById('charge').value) || 0;
-            const persons = parseFloat(document.getElementById('persons').value) || 1;
+            const rent    = Math.max(0, parseFloat($('rent').value)    || 0);
+            const food    = Math.max(0, parseFloat($('food').value)    || 0);
+            const units   = Math.max(0, parseFloat($('units').value)   || 0);
+            const charge  = Math.max(0, parseFloat($('charge').value)  || 0);
+            // FIX: clamp persons to minimum of 1 — prevents division by zero
+            const persons = Math.max(1, parseInt($('persons').value)   || 1);
 
-            const elecTotal = units * charge;
-            const total = rent + food + elecTotal;
-            const perPerson = total / persons;
+            const elec    = units * charge;
+            const total   = rent + food + elec;
+            const per     = total / persons;
 
-            // 1. UPDATE THE LIVE PREVIEW (VISIBLE)
-            document.getElementById('live-per-person').innerText = perPerson.toLocaleString(undefined, {minimumFractionDigits: 2});
+            // Live breakdown
+            $('b-rent').innerText  = fmt(rent);
+            $('b-food').innerText  = fmt(food);
+            $('b-units').innerText = units;
+            $('b-elec').innerText  = fmt(elec);
+            $('b-total').innerText = fmt(total);
+            $('b-per').innerText   = fmt(per);
 
-            // 2. UPDATE THE HIDDEN RECEIPT (FOR DOWNLOAD)
-            document.getElementById('rec-rent').innerText = rent.toFixed(2);
-            document.getElementById('rec-food').innerText = food.toFixed(2);
-            document.getElementById('rec-elec').innerText = elecTotal.toFixed(2);
-            document.getElementById('rec-total').innerText = total.toFixed(2);
-            document.getElementById('rec-split').innerText = perPerson.toFixed(2);
+            // Receipt values
+            $('r-rent').innerText    = fmt(rent);
+            $('r-food').innerText    = fmt(food);
+            $('r-units').innerText   = units;
+            $('r-elec').innerText    = fmt(elec);
+            $('r-total').innerText   = fmt(total);
+            $('r-per').innerText     = fmt(per);
+            $('r-persons').innerText = persons;
+
+            // FIX: enable/disable download based on whether there's actual data
+            const hasData = total > 0;
+            $('download-btn').disabled = !hasData;
+            $('hint').classList.toggle('visible', false); // hide hint on change
         }
 
-        // Attach listener to all inputs
-        inputs.forEach(input => input.addEventListener('input', updateValues));
+        document.querySelectorAll('input').forEach(i => i.addEventListener('input', updateValues));
 
-        // Download Logic
-        document.getElementById('download-btn').addEventListener('click', function() {
-            const receipt = document.getElementById('receipt-area');
-            html2canvas(receipt, {
-                backgroundColor: "#ffffff",
-                scale: 3
+        // Download logic
+        $('download-btn').addEventListener('click', function () {
+            // FIX: extra guard — shake + show hint if somehow clicked with no data
+            const total = parseFloat($('b-total').innerText.replace(/,/g, '')) || 0;
+            if (total <= 0) {
+                this.classList.remove('shake');
+                void this.offsetWidth; // reflow to restart animation
+                this.classList.add('shake');
+                $('hint').classList.add('visible');
+                return;
+            }
+
+            // FIX: update date at moment of download, not just page load
+            $('r-date').innerText = new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+
+            html2canvas($('receipt-area'), {
+                backgroundColor: '#ffffff',
+                scale: 3,
+                // FIX: tell html2canvas to wait for fonts to load
+                onclone: (doc) => {
+                    return document.fonts.ready;
+                }
             }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'RentReceipt.png';
-                link.href = canvas.toDataURL("image/png");
+                link.download = `RentReceipt_${new Date().toISOString().slice(0,10)}.png`;
+                link.href = canvas.toDataURL('image/png');
                 link.click();
             });
         });
